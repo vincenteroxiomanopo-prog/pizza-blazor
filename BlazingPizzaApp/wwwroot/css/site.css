@@ -46,10 +46,11 @@ form {
 
 .content {
     display: flex;
-    height: 100%;
+    height: calc(100vh - 5rem);
     z-index: 1;
     background-color: white;
 }
+
 
 .main {
     flex-grow: 1;

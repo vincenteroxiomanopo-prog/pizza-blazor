@@ -1,9 +1,10 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@using BlazingPizzaApp.Shared
 @using BlazingPizzaApp.Model
 @using BlazingPizzaApp.Data
 @inject IPizzaSpecials PizzaSpecialsService
 @inject BlazingPizzaApp.Services.OrderState OrderState
-
 <div class="main">
     @if (loadError is not null)
     {
