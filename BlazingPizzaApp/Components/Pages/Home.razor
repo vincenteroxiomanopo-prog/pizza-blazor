@@ -1,0 +1,30 @@
+﻿@page "/"
+@using BlazingPizzaApp.Data
+@using BlazingPizzaApp.Model
+
+<h1>Blazing Pizzas</h1>
+
+<ul class="pizza-cards">
+    @foreach (var pizzaSpecial in pizzaSpecials)
+    {
+        <li  style="background-image: url('@pizzaSpecial.ImageUrl')">
+            <div class="pizza-info">
+                <span class="title">@pizzaSpecial.Name</span>
+                @pizzaSpecial.Description
+                <span class="price">@pizzaSpecial.GetFormattedBasePrice()</span>
+            </div>
+        </li>
+    }
+</ul>
+
+@code{
+    private List<PizzaSpecial> pizzaSpecials = new List<PizzaSpecial>();
+
+    [Inject]
+    private IPizzaSpecials PizzaSpecialsService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        pizzaSpecials = (await PizzaSpecialsService.GetPizzaSpecialsAsync()).ToList();
+    }
+}
