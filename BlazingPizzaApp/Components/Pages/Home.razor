@@ -1,30 +1,91 @@
 ﻿@page "/"
-@using BlazingPizzaApp.Data
 @using BlazingPizzaApp.Model
+@inject BlazingPizzaApp.Services.OrderState OrderState
 
-<h1>Blazing Pizzas</h1>
-
-<ul class="pizza-cards">
-    @foreach (var pizzaSpecial in pizzaSpecials)
-    {
-        <li  style="background-image: url('@pizzaSpecial.ImageUrl')">
+<div class="main">
+    <ul class="pizza-cards">
+        @* Ini adalah contoh menu pizza statis agar kamu bisa mengkliknya *@
+        <li style="cursor:pointer; padding: 15px; border: 1px solid #ddd; border-radius: 5px; list-style: none;"
+            @onclick="@(() => ShowConfigurePizzaDialog(new PizzaSpecial { Id = 1, Name = "Cheese Pizza", BasePrice = 9.99m, Description = "Extra cheesy and delicious!" }))">
             <div class="pizza-info">
-                <span class="title">@pizzaSpecial.Name</span>
-                @pizzaSpecial.Description
-                <span class="price">@pizzaSpecial.GetFormattedBasePrice()</span>
+                <h4 class="title" style="margin: 0;">Cheese Pizza</h4>
+                <p style="margin: 5px 0 0 0;">Extra cheesy and delicious! - £9.99</p>
             </div>
         </li>
-    }
-</ul>
+    </ul>
+</div>
 
-@code{
-    private List<PizzaSpecial> pizzaSpecials = new List<PizzaSpecial>();
-
-    [Inject]
-    private IPizzaSpecials PizzaSpecialsService { get; set; }
-
-    protected override async Task OnInitializedAsync()
+<!-- SIDEBAR KERANJANG PESANAN -->
+<div class="sidebar">
+    @if (order.Pizzas.Any())
     {
-        pizzaSpecials = (await PizzaSpecialsService.GetPizzaSpecialsAsync()).ToList();
+        <div class="order-contents">
+            <h2>Your order</h2>
+
+            @foreach (var configuredPizza in order.Pizzas)
+            {
+                <div class="cart-item">
+                    <a @onclick="@(() => OrderState.RemoveConfiguredPizza(configuredPizza))" class="delete-item">x</a>
+                    <div class="title">@(configuredPizza.Size)" @configuredPizza.Special?.Name</div>
+                    <div class="item-price">
+                        @configuredPizza.GetFormattedTotalPrice()
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-cart">Choose a pizza<br>to get started</div>
+    }
+
+    <div class="order-total @(order.Pizzas.Any() ? "" : "hidden")">
+        Total:
+        <span class="total-price">@order.GetFormattedTotalPrice()</span>
+        <a href="checkout" class="@(OrderState.Order.Pizzas.Count == 0 ? "btn btn-warning disabled" : "btn btn-warning")">
+            Order >
+        </a>
+    </div>
+</div>
+
+<!-- DIALOG POPUP PIZZA -->
+@if (configuringPizza != null)
+{
+    <ConfigurePizzaDialog Pizza="configuringPizza"
+                          OnCancel="CancelConfigurePizzaDialog"
+                          OnConfirm="ConfirmConfigurePizzaDialog" />
+}
+
+@code {
+    List<PizzaSpecial> specials = new();
+    Order order => OrderState.Order;
+
+    // Perbaikan Warning CS8618: Tambahkan '?' agar variabel ini diizinkan kosong (null) di awal
+    Pizza? configuringPizza;
+
+    void ShowConfigurePizzaDialog(PizzaSpecial special)
+    {
+        configuringPizza = new Pizza()
+        {
+            Special = special,
+            SpecialId = special.Id,
+            // Perbaikan Error CS0117: Langsung masukkan angka 12, karena DefaultSize belum dibuat di model
+            Size = 12
+        };
+    }
+
+    void CancelConfigurePizzaDialog()
+    {
+        // Perbaikan Warning CS8625: Sekarang sudah aman di-set ke null
+        configuringPizza = null;
+    }
+
+    void ConfirmConfigurePizzaDialog()
+    {
+        if (configuringPizza != null)
+        {
+            order.Pizzas.Add(configuringPizza);
+            configuringPizza = null;
+        }
     }
 }
