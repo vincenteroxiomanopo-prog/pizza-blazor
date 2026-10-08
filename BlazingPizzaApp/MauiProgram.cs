@@ -1,4 +1,5 @@
 ﻿using BlazingPizzaApp.Data;
+using BlazingPizzaApp.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BlazingPizzaApp
@@ -21,6 +22,8 @@ namespace BlazingPizzaApp
             {
                 client.BaseAddress = new Uri("https://localhost:7219/");
             });
+
+            builder.Services.AddSingleton<OrderState>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

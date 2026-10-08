@@ -1,21 +1,33 @@
 ﻿@page "/"
 @using BlazingPizzaApp.Model
+@using BlazingPizzaApp.Data
+@inject IPizzaSpecials PizzaSpecialsService
 @inject BlazingPizzaApp.Services.OrderState OrderState
 
 <div class="main">
+    @if (loadError is not null)
+    {
+        <p class="text-danger">@loadError</p>
+    }
+
     <ul class="pizza-cards">
-        @* Ini adalah contoh menu pizza statis agar kamu bisa mengkliknya *@
-        <li style="cursor:pointer; padding: 15px; border: 1px solid #ddd; border-radius: 5px; list-style: none;"
-            @onclick="@(() => ShowConfigurePizzaDialog(new PizzaSpecial { Id = 1, Name = "Cheese Pizza", BasePrice = 9.99m, Description = "Extra cheesy and delicious!" }))">
-            <div class="pizza-info">
-                <h4 class="title" style="margin: 0;">Cheese Pizza</h4>
-                <p style="margin: 5px 0 0 0;">Extra cheesy and delicious! - £9.99</p>
-            </div>
-        </li>
+        @if (specials is not null)
+        {
+            @foreach (var special in specials)
+            {
+                <li @onclick="@(() => ShowConfigurePizzaDialog(special))"
+                    style="background-image: url('@special.ImageUrl')">
+                    <div class="pizza-info">
+                        <span class="title">@special.Name</span>
+                        @special.Description
+                        <span class="price">@special.GetFormattedBasePrice()</span>
+                    </div>
+                </li>
+            }
+        }
     </ul>
 </div>
 
-<!-- SIDEBAR KERANJANG PESANAN -->
 <div class="sidebar">
     @if (order.Pizzas.Any())
     {
@@ -48,7 +60,6 @@
     </div>
 </div>
 
-<!-- DIALOG POPUP PIZZA -->
 @if (configuringPizza != null)
 {
     <ConfigurePizzaDialog Pizza="configuringPizza"
@@ -57,26 +68,36 @@
 }
 
 @code {
-    List<PizzaSpecial> specials = new();
+    List<PizzaSpecial>? specials;
+    string? loadError;
+    Pizza? configuringPizza;
     Order order => OrderState.Order;
 
-    // Perbaikan Warning CS8618: Tambahkan '?' agar variabel ini diizinkan kosong (null) di awal
-    Pizza? configuringPizza;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            specials = (await PizzaSpecialsService.GetPizzaSpecialsAsync()).ToList();
+        }
+        catch (Exception)
+        {
+            specials = new();
+            loadError = "Menu pizza gagal dimuat. Pastikan project BlazingPizzaApp.API sedang berjalan.";
+        }
+    }
 
     void ShowConfigurePizzaDialog(PizzaSpecial special)
     {
         configuringPizza = new Pizza()
         {
             Special = special,
-            SpecialId = special.Id,
-            // Perbaikan Error CS0117: Langsung masukkan angka 12, karena DefaultSize belum dibuat di model
-            Size = 12
+            SpecialId = special.Id
+            // Size sudah default 12 di model Pizza
         };
     }
 
     void CancelConfigurePizzaDialog()
     {
-        // Perbaikan Warning CS8625: Sekarang sudah aman di-set ke null
         configuringPizza = null;
     }
 
